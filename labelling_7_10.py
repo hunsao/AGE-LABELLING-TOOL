@@ -328,12 +328,17 @@ def display_question(question, current_image_id):
                 prev_selected = previous_responses
             else:
                 prev_selected = None
-
+            # ***KEY CHANGE HERE***:  Handle cases where prev_selected is not in current options
+            try:
+                index = question['options'].index(prev_selected) if prev_selected in question['options'] else 0
+            except ValueError:  # Handle the case where prev_selected is not in question['options']
+                index = 0  # Default to the first option
             selected_option = st.radio(
                 "Select one:",
                 question['options'],
                 key=f"{current_image_id}_radio",
-                index=question['options'].index(prev_selected) if prev_selected in question['options'] else 0
+                index=index
+                #index=question['options'].index(prev_selected) if prev_selected in question['options'] else 0
             )
             responses = selected_option
 
