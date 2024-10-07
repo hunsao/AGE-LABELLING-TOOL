@@ -249,7 +249,8 @@ questionnaire = {
 
 N_IMAGES_PER_QUESTION = 2  # Número de imágenes a mostrar por cada pregunta
 
-def display_question(question, current_image_id):
+#def display_question(question, current_image_id):
+def display_question(question, current_image_id, review_mode=False, previous_responses={}):
     st.write("### **Question:**")
     st.write(question['question'])
     st.write("### **Definition:**")
