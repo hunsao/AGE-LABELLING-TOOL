@@ -292,7 +292,8 @@ def display_question(question, current_image_id):
                         # other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
                         # selected_options.append(other_text)
                         other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
-                        selected_options.append(f"{question['question']} - {option}: {other_text}")  # Format the "Others" response
+                        selected_options.append(f"{option}: {other_text}")  # Format the "Others" response
+                        #selected_options.append(f"{question['question']} - {option}: {other_text}")  # Format the "Others" response
                 else:
                     selected = st.checkbox(option, key=f"{current_image_id}_{option}")
                     if selected:
