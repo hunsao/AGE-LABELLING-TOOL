@@ -289,8 +289,11 @@ def display_question(question, current_image_id):
                 if option == "Others" and question.get('other_field'):
 
                    # Get previous state for review mode
-                    prev_selected = option in previous_responses
-                    selected = st.checkbox(option, key=f"{current_image_id}_{option}", value=prev_selected if review_mode else False)
+                    #prev_selected = option in previous_responses
+                    prev_selected = option in previous_responses if review_mode else False  # Previous selection for "Others" checkbox
+
+                    #selected = st.checkbox(option, key=f"{current_image_id}_{option}", value=prev_selected if review_mode else False)
+                    selected = st.checkbox(option, key=f"{current_image_id}_{option}", value=prev_selected)
                     
                     #selected = st.checkbox(option, key=f"{current_image_id}_{option}")
                     if selected:
@@ -300,19 +303,38 @@ def display_question(question, current_image_id):
                         #selected_options.append(f"{option}: {other_text}")  # Format the "Others" response
                         ##selected_options.append(f"{question['question']} - {option}: {other_text}")  # Format the "Others" response
 
-                        prev_other_text = previous_responses.get(option, "")  # Get previous "Others" text
-                        other_text = st.text_input("Please specify:", value=prev_other_text if review_mode else "", key=f"{current_image_id}_other_text")
-                        selected_options.append(f"{option}: {other_text}")
-                
+                        #prev_other_text = previous_responses.get(option, "")  # Get previous "Others" text
+                        prev_other_text = previous_responses.get(f"{question['question']} - {option}:", "") if review_mode and isinstance(previous_responses, list) and any(option in item for item in previous_responses) else ""
+                        #other_text = st.text_input("Please specify:", value=prev_other_text if review_mode else "", key=f"{current_image_id}_other_text")
+                        other_text = st.text_input("Please specify:", value=prev_other_text.split(": ")[1] if ": " in prev_other_text else "", key=f"{current_image_id}_other_text")
+                        #selected_options.append(f"{option}: {other_text}")
+                        selected_options.append(f"{question['question']} - {option}: {other_text}")
                 else:
-                    prev_selected = option in previous_responses
-                    selected = st.checkbox(option, key=f"{current_image_id}_{option}", value=prev_selected if review_mode else False)
+                    #prev_selected = option in previous_responses
+                    prev_selected = option in previous_responses if review_mode else False # Previous selection for other checkboxes
+                    #selected = st.checkbox(option, key=f"{current_image_id}_{option}", value=prev_selected if review_mode else False)
+                    selected = st.checkbox(option, key=f"{current_image_id}_{option}", value=prev_selected)
+
                     if selected:
                         selected_options.append(option)
             responses = selected_options
         else:  # Single choice (radio)
-            prev_selected = previous_responses if review_mode else None
-            selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio", index=question['options'].index(prev_selected) if prev_selected in question['options'] else 0)
+            # prev_selected = previous_responses if review_mode else None
+            # selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio", index=question['options'].index(prev_selected) if prev_selected in question['options'] else 0)
+            # responses = selected_option
+            if review_mode and isinstance(previous_responses, dict):
+                prev_selected = list(previous_responses.keys())[0] if previous_responses else None
+            elif review_mode:
+                prev_selected = previous_responses
+            else:
+                prev_selected = None
+
+            selected_option = st.radio(
+                "Select one:",
+                question['options'],
+                key=f"{current_image_id}_radio",
+                index=question['options'].index(prev_selected) if prev_selected in question['options'] else 0
+            )
             responses = selected_option
 
     return responses
