@@ -186,11 +186,11 @@ questionnaire = {
         {
             "question": "Q1. Indicate if the activity you see in the image correlates with the activity formulated in the prompt",
             "options": ["Yes", "No", "Don't know"],
-            "definition": """The activity you see in the image is the main action people you observe is doing. For example: eating, walking, speaking...
-                            Options:
-                            Yes = the image is not in contradiction to the activity formulated in the prompt.
-                            No = the image is clearly not the activity formulated in the prompt. 
-                            Don't know = you can't decide if the activity is the same in both cases (prompt and image).""",
+            "definition": """The activity you see in the image is the main action people you observe is doing. For example: eating, walking, speaking...<br>
+                            <br><b>Options:</b><br>
+                            - Yes: The image is not in contradiction to the activity formulated in the prompt.<br>
+                            - No: The image is clearly not the activity formulated in the prompt.<br>
+                            - Don't know: You can't decide if the activity is the same in both cases (prompt and image).""",
             "multiple": False
         }
     ],
