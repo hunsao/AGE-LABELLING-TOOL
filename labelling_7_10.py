@@ -272,7 +272,7 @@ def display_question(question, current_image_id, review_mode=False, previous_res
     #                         responses[f"{option}_explanation"] = explanation
     #                 if selected:
     #                     responses[option] = True
-     if isinstance(question['options'], dict):  # Round 3 logic
+    if isinstance(question['options'], dict):  # Round 3 logic
             all_options = []
             categories_options = [] # Store (category, option) tuples
     
@@ -293,7 +293,7 @@ def display_question(question, current_image_id, review_mode=False, previous_res
                         explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation", value=prev_explanation)
                         responses[f"{option}_explanation"] = explanation
                     if selected:
-                        responses[option] = True
+                    responses[option] = True
             
         if "Other" in question['options']:
             other_key = f"{current_image_id}_other_characteristic" # Unique key based on image ID
