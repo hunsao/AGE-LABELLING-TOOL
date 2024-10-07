@@ -272,18 +272,28 @@ def display_question(question, current_image_id, review_mode=False, previous_res
     #                         responses[f"{option}_explanation"] = explanation
     #                 if selected:
     #                     responses[option] = True
-    if isinstance(question['options'], dict):
-        all_options = []  # List to store all options from all categories
+ if isinstance(question['options'], dict):  # Round 3 logic
+        all_options = []
+        categories_options = [] # Store (category, option) tuples
+
         for category, options in question['options'].items():
-            st.write(f"#### {category}")  # Display category header
-            all_options.extend(options)  # Add options to the all_options list
-    
-        num_cols = 2  # Or however many columns you want
-        cols = st.columns(num_cols) # Create columns outside the loop
-    
-        for i, option in enumerate(all_options):
-            with cols[i % num_cols]: # Distribute options across columns
-                selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+            st.write(f"#### {category}")
+            all_options.extend(options)
+            categories_options.extend([(category, option) for option in options]) # Store category with each option
+
+        num_cols = 2
+        cols = st.columns(num_cols)
+
+        for i, (category, option) in enumerate(categories_options): # Use category and option
+            with cols[i % num_cols]:
+                prev_selected = previous_responses.get(option, False) if review_mode else False  # Use previous responses for review mode
+                selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}", value=prev_selected)  # Include category in key
+                if selected and question.get('requires_explanation'):
+                    prev_explanation = previous_responses.get(f"{option}_explanation", "") if review_mode else ""
+                    explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation", value=prev_explanation)
+                    responses[f"{option}_explanation"] = explanation
+                if selected:
+                    responses[option] = True
             
         if "Other" in question['options']:
             other_key = f"{current_image_id}_other_characteristic" # Unique key based on image ID
