@@ -263,25 +263,47 @@ def display_question(question, current_image_id):
                     explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
                     responses["other"] = other
                     responses["other_explanation"] = explanation
-    else:
-        # Handle simple options (Round 1 & 2)
-        if question.get('multiple', False):  # Check for multiple selections
-            selected_options = []
-            for option in question['options']:
-                if option == "Others" and question.get('other_field'):
-                    selected = st.checkbox(option, key=f"{current_image_id}_{option}")
-                    if selected:
-                        other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
-                        selected_options.append(other_text) # Add specified text
-                else:
-                    selected = st.checkbox(option, key=f"{current_image_id}_{option}")
-                    if selected:
-                        selected_options.append(option)
-            responses = selected_options  # Store the list of selected options
-        else: # Single selection
-            selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio")
-            responses = selected_option # Store the single selected option
+    # else:
+    #     # Handle simple options (Round 1 & 2)
+    #     if question.get('multiple', False):  # Check for multiple selections
+    #         selected_options = []
+    #         for option in question['options']:
+    #             if option == "Others" and question.get('other_field'):
+    #                 selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+    #                 if selected:
+    #                     other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+    #                     selected_options.append(other_text) # Add specified text
+    #             else:
+    #                 selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+    #                 if selected:
+    #                     selected_options.append(option)
+    #         responses = selected_options  # Store the list of selected options
+    #     else: # Single selection
+    #         selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio")
+    #         responses = selected_option # Store the single selected option
 
+
+    # return responses
+    else:
+        # Handle simple options (Round 1 & 2) using buttons
+        if question.get('multiple', False):
+            selected_options = []
+            cols = st.columns(len(question['options']))  # Create columns for buttons
+            for i, option in enumerate(question['options']):
+                with cols[i]:
+                    if option == "Others" and question.get('other_field'):
+                        selected = st.button(option, key=f"{current_image_id}_{option}")
+                        if selected:
+                            other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+                            selected_options.append(other_text)
+                    else:
+                        selected = st.button(option, key=f"{current_image_id}_{option}")
+                        if selected:
+                            selected_options.append(option)
+            responses = selected_options
+        else:  # Single Selection (radio buttons)
+            selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio")
+            responses = selected_option
 
     return responses
 
