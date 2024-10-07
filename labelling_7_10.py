@@ -262,7 +262,7 @@ def display_question(question, current_image_id):
                     explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
                     responses["other"] = other
                     responses["other_explanation"] = explanation
-else:
+    else:
         # Handle simple options (Round 1 & 2)
         if question.get('multiple', False):  # Check for multiple selections
             selected_options = []
