@@ -261,6 +261,7 @@ def display_question(question, current_image_id):
                     explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
                     responses["other"] = other
                     responses["other_explanation"] = explanation
+                    
     else:  # Round 1 & 2 logic (simple options)
         if question.get('multiple', False):  # Multiple choice (checkboxes)
             selected_options = []
@@ -279,57 +280,14 @@ def display_question(question, current_image_id):
             cols = st.columns(len(question['options']))
             for i, option in enumerate(question['options']):
                 with cols[i]:
-                    selected = st.button(option, key=f"{current_image_id}_{option}")
-                    if selected:
+                    if st.button(option, key=f"{current_image_id}_{option}"):
                         responses = option
-                        st.rerun()  # Crucial for button behavior
+                        # Store the response immediately in session state before rerun
+                        st.session_state.temp_response = responses  # Use a temporary variable
+                        st.rerun()
 
     return responses
     
-    # else:
-    #     # Handle simple options (Round 1 & 2)
-    #     if question.get('multiple', False):  # Check for multiple selections
-    #         selected_options = []
-    #         for option in question['options']:
-    #             if option == "Others" and question.get('other_field'):
-    #                 selected = st.checkbox(option, key=f"{current_image_id}_{option}")
-    #                 if selected:
-    #                     other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
-    #                     selected_options.append(other_text) # Add specified text
-    #             else:
-    #                 selected = st.checkbox(option, key=f"{current_image_id}_{option}")
-    #                 if selected:
-    #                     selected_options.append(option)
-    #         responses = selected_options  # Store the list of selected options
-    #     else: # Single selection
-    #         selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio")
-    #         responses = selected_option # Store the single selected option
-
-
-    # # return responses
-    # else:
-    #     # Handle simple options (Round 1 & 2) using buttons
-    #     if question.get('multiple', False):
-    #         selected_options = []
-    #         cols = st.columns(len(question['options']))  # Create columns for buttons
-    #         for i, option in enumerate(question['options']):
-    #             with cols[i]:
-    #                 if option == "Others" and question.get('other_field'):
-    #                     selected = st.button(option, key=f"{current_image_id}_{option}")
-    #                     if selected:
-    #                         other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
-    #                         selected_options.append(other_text)
-    #                 else:
-    #                     selected = st.button(option, key=f"{current_image_id}_{option}")
-    #                     if selected:
-    #                         selected_options.append(option)
-    #         responses = selected_options
-    #     else:  # Single Selection (radio buttons)
-    #         selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio")
-    #         responses = selected_option
-
-    # return responses
-
 def main():
     drive_service, sheets_service = get_google_services()
     
@@ -413,10 +371,19 @@ def main():
                     responses = display_question(current_question, current_image['id'])
                     
                     # Store responses
+                    # if responses:
+                    #     if current_image['id'] not in st.session_state.image_responses:
+                    #         st.session_state.image_responses[current_image['id']] = {}
+                    #     st.session_state.image_responses[current_image['id']][current_question['question']] = responses
                     if responses:
                         if current_image['id'] not in st.session_state.image_responses:
                             st.session_state.image_responses[current_image['id']] = {}
-                        st.session_state.image_responses[current_image['id']][current_question['question']] = responses
+            
+                        if "temp_response" in st.session_state:  # Check for temp response
+                            st.session_state.image_responses[current_image['id']][current_question["question"]] = st.session_state.temp_response
+                            del st.session_state.temp_response  # Delete the temporary variable
+                        else:
+                            st.session_state.image_responses[current_image['id']][current_question["question"]] = responses
 
                     # Navigation buttons
                     nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 1])
