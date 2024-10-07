@@ -255,11 +255,11 @@ def display_question(question, current_image_id):
                     if selected:
                         responses[option] = True
 
-            if category == "Other":  # Handle "Other" category
-                other = st.text_input("Other characteristic:", key=f"{current_image_id}_other")
-                if other:
+            if category == "Other":
+                other_characteristic = st.text_input("Other characteristic:", key=f"{current_image_id}_other_characteristic")  # Store the characteristic
+                if other_characteristic:  # Only ask for explanation if characteristic is provided
                     explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
-                    responses["other"] = other
+                    responses["other_characteristic"] = other_characteristic  # Store the characteristic
                     responses["other_explanation"] = explanation
                     
     else:  # Round 1 & 2 logic (simple options)
@@ -277,14 +277,16 @@ def display_question(question, current_image_id):
                         selected_options.append(option)
             responses = selected_options
         else:  # Single choice (buttons)
-            cols = st.columns(len(question['options']))
-            for i, option in enumerate(question['options']):
-                with cols[i]:
-                    if st.button(option, key=f"{current_image_id}_{option}"):
-                        responses = option
-                        # Store the response immediately in session state before rerun
-                        st.session_state.temp_response = responses  # Use a temporary variable
-                        st.rerun()
+            selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio")
+            responses = selected_option  # Store the selected option directly
+            # cols = st.columns(len(question['options']))
+            # for i, option in enumerate(question['options']):
+            #     with cols[i]:
+            #         if st.button(option, key=f"{current_image_id}_{option}"):
+            #             responses = option
+            #             # Store the response immediately in session state before rerun
+            #             st.session_state.temp_response = responses  # Use a temporary variable
+            #             st.rerun()
 
     return responses
     
@@ -378,12 +380,14 @@ def main():
                     if responses:
                         if current_image['id'] not in st.session_state.image_responses:
                             st.session_state.image_responses[current_image['id']] = {}
-            
-                        if "temp_response" in st.session_state:  # Check for temp response
-                            st.session_state.image_responses[current_image['id']][current_question["question"]] = st.session_state.temp_response
-                            del st.session_state.temp_response  # Delete the temporary variable
-                        else:
-                            st.session_state.image_responses[current_image['id']][current_question["question"]] = responses
+                        st.session_state.image_responses[current_image['id']][current_question["question"]] = responses
+
+                    #BUTTON
+                        # if "temp_response" in st.session_state:  # Check for temp response
+                        #     st.session_state.image_responses[current_image['id']][current_question["question"]] = st.session_state.temp_response
+                        #     del st.session_state.temp_response  # Delete the temporary variable
+                        # else:
+                        #     st.session_state.image_responses[current_image['id']][current_question["question"]] = responses
 
                     # Navigation buttons
                     nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 1])
