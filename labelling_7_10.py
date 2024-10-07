@@ -303,7 +303,7 @@ def main():
 
 
     if 'page' not in st.session_state:
-    st.session_state.page = 'start'
+        st.session_state.page = 'start'
     if 'current_question' not in st.session_state:
         st.session_state.current_question = 0
     if 'user_id' not in st.session_state:
