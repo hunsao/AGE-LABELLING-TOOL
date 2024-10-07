@@ -255,12 +255,14 @@ def display_question(question, current_image_id):
                     if selected:
                         responses[option] = True
 
-        if "Other" in question['options']:  # Handle "Other" category *outside* the loop
-            other_characteristic = st.text_input("Other characteristic:", key=f"{current_image_id}_other_characteristic")
+        if "Other" in question['options']:
+            other_key = f"{current_image_id}_other_characteristic" # Unique key based on image ID
+            other_characteristic = st.text_input("Other characteristic:", key=other_key)
             responses["other_characteristic"] = other_characteristic
 
             if other_characteristic:
-                explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
+                explanation_key = f"{current_image_id}_other_explanation" # Unique key based on image ID
+                explanation = st.text_area("Why?", key=explanation_key)
                 responses["other_explanation"] = explanation
                     
     else:  # Round 1 & 2 logic (simple options)
