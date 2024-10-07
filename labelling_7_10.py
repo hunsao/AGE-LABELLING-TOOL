@@ -383,6 +383,17 @@ def main():
                             st.rerun()
                     
                     # Next Question button (centered and below other navigation)
+                    st.markdown(
+                        """
+                        <style>
+                        div.stButton > button {
+                            display: block;
+                            margin: 0 auto;
+                        }
+                        </style>
+                        """,
+                        unsafe_allow_html=True
+                    )
                     if st.button("Next Question", key="next_button"):
                         current_image_id = st.session_state.random_images[st.session_state.current_image_index]['id']
                         if current_image_id not in st.session_state.image_responses:
