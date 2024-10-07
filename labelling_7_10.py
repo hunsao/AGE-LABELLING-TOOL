@@ -255,12 +255,13 @@ def display_question(question, current_image_id):
                     if selected:
                         responses[option] = True
 
-            if category == "Other":
-                other_characteristic = st.text_input("Other characteristic:", key=f"{current_image_id}_other_characteristic")  # Store the characteristic
-                if other_characteristic:  # Only ask for explanation if characteristic is provided
-                    explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
-                    responses["other_characteristic"] = other_characteristic  # Store the characteristic
-                    responses["other_explanation"] = explanation
+        if "Other" in question['options']:  # Handle "Other" category *outside* the loop
+            other_characteristic = st.text_input("Other characteristic:", key=f"{current_image_id}_other_characteristic")
+            responses["other_characteristic"] = other_characteristic
+
+            if other_characteristic:
+                explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
+                responses["other_explanation"] = explanation
                     
     else:  # Round 1 & 2 logic (simple options)
         if question.get('multiple', False):  # Multiple choice (checkboxes)
