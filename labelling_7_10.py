@@ -378,7 +378,7 @@ def main():
                 with col2:
                     current_image = st.session_state.random_images[st.session_state.current_image_index]
                     image_bytes = download_file_from_google_drive(drive_service, current_image['id'])
-                    st.image(image_bytes, use_column_width=True)
+                    st.image(image_bytes, use_column_width=True,caption=current_image['name'])
 
                 # Main questionnaire section
                 with col1:
