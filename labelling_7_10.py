@@ -273,37 +273,37 @@ def display_question(question, current_image_id, review_mode=False, previous_res
     #                 if selected:
     #                     responses[option] = True
     if isinstance(question['options'], dict):  # Round 3 logic
-            all_options = []
-            categories_options = [] # Store (category, option) tuples
-    
-            for category, options in question['options'].items():
-                st.write(f"#### {category}")
-                all_options.extend(options)
-                categories_options.extend([(category, option) for option in options]) # Store category with each option
-    
-            num_cols = 2
-            cols = st.columns(num_cols)
-    
-            for i, (category, option) in enumerate(categories_options): # Use category and option
-                with cols[i % num_cols]:
-                    prev_selected = previous_responses.get(option, False) if review_mode else False  # Use previous responses for review mode
-                    selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}", value=prev_selected)  # Include category in key
-                    if selected and question.get('requires_explanation'):
-                        prev_explanation = previous_responses.get(f"{option}_explanation", "") if review_mode else ""
-                        explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation", value=prev_explanation)
-                        responses[f"{option}_explanation"] = explanation
-                    if selected:
-                    responses[option] = True
+        all_options = []
+        categories_options = [] # Store (category, option) tuples
+
+        for category, options in question['options'].items():
+            st.write(f"#### {category}")
+            all_options.extend(options)
+            categories_options.extend([(category, option) for option in options]) # Store category with each option
+
+        num_cols = 2
+        cols = st.columns(num_cols)
+
+        for i, (category, option) in enumerate(categories_options): # Use category and option
+            with cols[i % num_cols]:
+                prev_selected = previous_responses.get(option, False) if review_mode else False  # Use previous responses for review mode
+                selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}", value=prev_selected)  # Include category in key
+                if selected and question.get('requires_explanation'):
+                    prev_explanation = previous_responses.get(f"{option}_explanation", "") if review_mode else ""
+                    explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation", value=prev_explanation)
+                    responses[f"{option}_explanation"] = explanation
+                if selected:
+                responses[option] = True
             
-            if "Other" in question['options']:
-                other_key = f"{current_image_id}_other_characteristic" # Unique key based on image ID
-                other_characteristic = st.text_input("Other characteristic:", key=other_key)
-                responses["other_characteristic"] = other_characteristic
-    
-                if other_characteristic:
-                    explanation_key = f"{current_image_id}_other_explanation" # Unique key based on image ID
-                    explanation = st.text_area("Why?", key=explanation_key)
-                    responses["other_explanation"] = explanation
+        if "Other" in question['options']:
+            other_key = f"{current_image_id}_other_characteristic" # Unique key based on image ID
+            other_characteristic = st.text_input("Other characteristic:", key=other_key)
+            responses["other_characteristic"] = other_characteristic
+
+            if other_characteristic:
+                explanation_key = f"{current_image_id}_other_explanation" # Unique key based on image ID
+                explanation = st.text_area("Why?", key=explanation_key)
+                responses["other_explanation"] = explanation
                     
     else:  # Round 1 & 2 logic (simple options)
         if question.get('multiple', False):  # Multiple choice (checkboxes)
