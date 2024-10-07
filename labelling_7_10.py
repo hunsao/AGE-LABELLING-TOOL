@@ -218,6 +218,51 @@ questionnaire = {
 
 N_IMAGES_PER_QUESTION = 2  # Número de imágenes a mostrar por cada pregunta
 
+def display_question(question, current_image_id):
+    st.write("### **Question:**")
+    st.write(question['question'])
+    st.write("### **Definition:**")
+    st.write(question['definition'])
+    
+    responses = {}
+    
+    if isinstance(question['options'], dict):
+        # Handle nested options (Round 3)
+        for category, options in question['options'].items():
+            st.write(f"#### {category}")
+            if options:
+                for option in options:
+                    col1, col2 = st.columns([1, 3])
+                    with col1:
+                        selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}")
+                    with col2:
+                        if selected and question.get('requires_explanation'):
+                            explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation")
+                            responses[f"{option}_explanation"] = explanation
+                    if selected:
+                        responses[option] = True
+            
+            if category == "Other":
+                other = st.text_input("Other characteristic:", key=f"{current_image_id}_other")
+                if other:
+                    explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
+                    responses["other"] = other
+                    responses["other_explanation"] = explanation
+    else:
+        # Handle simple options (Round 1 & 2)
+        for option in question['options']:
+            if option == "Others" and question.get('other_field'):
+                selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+                if selected:
+                    other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+                    responses[option] = other_text
+            else:
+                selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+                if selected:
+                    responses[option] = True
+    
+    return responses
+
 def main():
     drive_service, sheets_service = get_google_services()
     
