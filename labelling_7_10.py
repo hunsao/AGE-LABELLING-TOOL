@@ -126,18 +126,21 @@ def download_and_cache_csv(_service, file_id):
 # def save_labels_to_google_sheets(sheets_service, spreadsheet_id, user_id, image_responses):
 #     try:
 #         current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-#         # Crear una lista de valores para cada respuesta, incluyendo la pregunta
 #         values = []
-#         for image_id, response_dict in image_responses.items():
-#             # Obtener el nombre de la imagen usando su ID
-#             image_name = next((img['name'] for img in st.session_state.all_images if img['id'] == image_id), "Unknown Image")
-#             for question, answer in response_dict.items():
-#                 values.append([user_id, image_name, current_datetime, question, answer])
         
-#         body = {
-#             'values': values
-#         }
+#         for image_id, response_dict in image_responses.items():
+#             image_name = next((img['name'] for img in st.session_state.all_images if img['id'] == image_id), "Unknown Image")
+#             for question, answers in response_dict.items():
+#                 if isinstance(answers, dict):
+#                     for option, value in answers.items():
+#                         if isinstance(value, bool) and value:
+#                             values.append([user_id, image_name, current_datetime, question, option])
+#                         elif isinstance(value, str) and option.endswith('_explanation'):
+#                             values.append([user_id, image_name, current_datetime, f"{question} - Explanation", f"{option[:-12]}: {value}"])
+#                 else:
+#                     values.append([user_id, image_name, current_datetime, question, str(answers)])
+        
+#         body = {'values': values}
         
 #         result = sheets_service.spreadsheets().values().append(
 #             spreadsheetId=spreadsheet_id,
@@ -146,27 +149,38 @@ def download_and_cache_csv(_service, file_id):
 #             body=body
 #         ).execute()
 
-#         st.sidebar.success(f'Respuestas guardadas para las imágenes en Google Sheets')
+#         st.sidebar.success('Responses saved successfully to Google Sheets')
 #     except Exception as e:
-#         st.error(f"Error al guardar las etiquetas en Google Sheets: {str(e)}")
+#         st.error(f"Error saving labels to Google Sheets: {str(e)}")
 
 def save_labels_to_google_sheets(sheets_service, spreadsheet_id, user_id, image_responses):
     try:
         current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         values = []
-        
+
         for image_id, response_dict in image_responses.items():
             image_name = next((img['name'] for img in st.session_state.all_images if img['id'] == image_id), "Unknown Image")
             for question, answers in response_dict.items():
                 if isinstance(answers, dict):
+                    # ***Corrected "Other" handling***
+                    if "other_characteristic" in answers:  # Check for "other_characteristic" key
+                        characteristic = answers.get("other_characteristic", "")  # Get the characteristic (or empty string if not present)
+                        values.append([user_id, image_name, current_datetime, question, characteristic]) # Append characteristic
+
+                    if "other_explanation" in answers: # Check for other_explanation
+                        explanation = answers.get("other_explanation", "") # Get explanation (or empty string)
+                        values.append([user_id, image_name, current_datetime, f"{question} - Explanation", explanation]) # Append explanation
+
+                    # Handle other options and explanations (unchanged)
                     for option, value in answers.items():
-                        if isinstance(value, bool) and value:
-                            values.append([user_id, image_name, current_datetime, question, option])
-                        elif isinstance(value, str) and option.endswith('_explanation'):
-                            values.append([user_id, image_name, current_datetime, f"{question} - Explanation", f"{option[:-12]}: {value}"])
-                else:
+                        if option not in ["other_characteristic", "other_explanation"]: # Avoid duplicate entries
+                            if isinstance(value, bool) and value:
+                                values.append([user_id, image_name, current_datetime, question, option])
+                            elif isinstance(value, str) and option.endswith('_explanation'):
+                                values.append([user_id, image_name, current_datetime, f"{question} - Explanation", f"{option[:-12]}: {value}"])
+
+                else: # Not a dictionary (single-choice, etc.)
                     values.append([user_id, image_name, current_datetime, question, str(answers)])
-        
         body = {'values': values}
         
         result = sheets_service.spreadsheets().values().append(
