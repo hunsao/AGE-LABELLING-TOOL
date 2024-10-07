@@ -236,18 +236,35 @@ def display_question(question, current_image_id):
     st.write("### **Question:**")
     st.write(question['question'])
     st.write("### **Definition:**")
-    #st.write(question['definition'])
-    st.markdown(question['definition'], unsafe_allow_html=True) #  <--- Crucial: Use st.markdown
+    st.markdown(question['definition'], unsafe_allow_html=True)
 
     responses = {}
-    
-    if isinstance(question['options'], dict):
-        # ... (Existing code for nested options - Round 3 - No changes needed here)
-    else:
-        # Handle simple options (Round 1 & 2)
-        if question.get('multiple', False):
+
+    if isinstance(question['options'], dict):  # Round 3 logic (nested options)
+        for category, options in question['options'].items():
+            st.write(f"#### {category}")
+            if options:
+                for option in options:
+                    col1, col2 = st.columns([1, 3])
+                    with col1:
+                        selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}")
+                    with col2:
+                        if selected and question.get('requires_explanation'):
+                            explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation")
+                            responses[f"{option}_explanation"] = explanation
+                    if selected:
+                        responses[option] = True
+
+            if category == "Other":  # Handle "Other" category
+                other = st.text_input("Other characteristic:", key=f"{current_image_id}_other")
+                if other:
+                    explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
+                    responses["other"] = other
+                    responses["other_explanation"] = explanation
+    else:  # Round 1 & 2 logic (simple options)
+        if question.get('multiple', False):  # Multiple choice (checkboxes)
             selected_options = []
-            for option in question['options']:  # Keep checkboxes for multiple choice
+            for option in question['options']:
                 if option == "Others" and question.get('other_field'):
                     selected = st.checkbox(option, key=f"{current_image_id}_{option}")
                     if selected:
@@ -258,16 +275,17 @@ def display_question(question, current_image_id):
                     if selected:
                         selected_options.append(option)
             responses = selected_options
-        else:  # Single Selection (use buttons)
-            cols = st.columns(len(question['options'])) # Arrange buttons horizontally
+        else:  # Single choice (buttons)
+            cols = st.columns(len(question['options']))
             for i, option in enumerate(question['options']):
                 with cols[i]:
                     selected = st.button(option, key=f"{current_image_id}_{option}")
                     if selected:
-                        responses = option  # Store the selected option
-                        st.rerun() # Crucial: Stop further execution after button click
+                        responses = option
+                        st.rerun()  # Crucial for button behavior
 
     return responses
+    
     # else:
     #     # Handle simple options (Round 1 & 2)
     #     if question.get('multiple', False):  # Check for multiple selections
