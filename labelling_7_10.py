@@ -367,37 +367,39 @@ def main():
                         st.session_state.image_responses[current_image['id']][current_question['question']] = responses
 
                 # Navigation buttons
-                col3, col4, col5 = st.columns([1, 1, 1])  # Navigation buttons in col1
+                nav_col1, nav_col2, nav_col3 = st.columns([1, 1, 1])
 
-                with col3:
+                with nav_col1:
                     if st.button("Previous image") and st.session_state.current_image_index > 0:
                         st.session_state.current_image_index -= 1
                         st.rerun()
 
-                with col4:
+                with nav_col2:
                     st.write(f"<div style='text-align: center;'>Image {st.session_state.current_image_index + 1} of {N_IMAGES_PER_QUESTION}</div>", unsafe_allow_html=True)
 
-                with col5:
+                with nav_col3:
                     if st.button("Next image") and st.session_state.current_image_index < N_IMAGES_PER_QUESTION - 1:
                         st.session_state.current_image_index += 1
                         st.rerun()
-
+                
+                # Next Question button (centered and below other navigation)
                 if st.button("Next Question", key="next_button"):
-                    responses = st.session_state.image_responses.get(current_image['id'], {}).get(current_question['question'])
-                    if responses:
-                        st.session_state.current_question += 1
-                        total_questions = sum(len(questions) for questions in questionnaire.values())
+                    current_image_id = st.session_state.random_images[st.session_state.current_image_index]['id']
+                    if current_image_id not in st.session_state.image_responses:
+                        st.session_state.image_responses[current_image_id] = {}
+                    st.session_state.image_responses[current_image_id][current_question["question"]] = responses
 
-                        if st.session_state.current_question >= total_questions:
-                            st.session_state.page = 'review'
-                            st.session_state.review_mode = True
-                        else:
-                            st.session_state.random_images = random.sample(image_list, N_IMAGES_PER_QUESTION)
-                            st.session_state.all_images.extend(st.session_state.random_images)
-                            st.session_state.current_image_index = 0
-                        st.rerun()
+                    st.session_state.current_question += 1
+                    total_questions = sum(len(questions) for questions in questionnaire.values())
+
+                    if st.session_state.current_question >= total_questions:
+                        st.session_state.page = 'review'
+                        st.session_state.review_mode = True
                     else:
-                        st.warning("Please answer the question before proceeding.")
+                        st.session_state.random_images = random.sample(image_list, N_IMAGES_PER_QUESTION)
+                        st.session_state.all_images.extend(st.session_state.random_images)
+                        st.session_state.current_image_index = 0
+                    st.rerun()
                 # with col2:
                 #     st.write(f"<div style='text-align: center;'>Image {st.session_state.current_image_index + 1} of {N_IMAGES_PER_QUESTION}</div>", unsafe_allow_html=True)
                     
