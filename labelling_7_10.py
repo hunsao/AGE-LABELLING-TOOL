@@ -236,8 +236,9 @@ def display_question(question, current_image_id):
     st.write("### **Question:**")
     st.write(question['question'])
     st.write("### **Definition:**")
-    st.write(question['definition'])
-    
+    #st.write(question['definition'])
+    st.markdown(question['definition'], unsafe_allow_html=True) #  <--- Crucial: Use st.markdown
+
     responses = {}
     
     if isinstance(question['options'], dict):
