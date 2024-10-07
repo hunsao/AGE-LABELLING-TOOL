@@ -293,7 +293,7 @@ def display_question(question, current_image_id, review_mode=False, previous_res
                     explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation", value=prev_explanation)
                     responses[f"{option}_explanation"] = explanation
                 if selected:
-                responses[option] = True
+                    responses[option] = True
             
         if "Other" in question['options']:
             other_key = f"{current_image_id}_other_characteristic" # Unique key based on image ID
