@@ -176,11 +176,14 @@ def save_labels_to_google_sheets(sheets_service, spreadsheet_id, user_id, image_
                         if option not in ["other_characteristic", "other_explanation"]: # Avoid duplicate entries
                             if isinstance(value, bool) and value:
                                 values.append([user_id, image_name, current_datetime, question, option])
-                            elif isinstance(value, str) and option.endswith('_explanation'):
-                                values.append([user_id, image_name, current_datetime, f"{question} - Explanation", f"{option[:-12]}: {value}"])
+                            # elif isinstance(value, str) and option.endswith('_explanation'):
+                            #     values.append([user_id, image_name, current_datetime, f"{question} - Explanation", f"{option[:-12]}: {value}"])
+                            elif isinstance(value, str) : #and option.endswith('_explanation')
+                                values.append([user_id, image_name, current_datetime, question, value]) # Append other response directly
 
                 else: # Not a dictionary (single-choice, etc.)
                     values.append([user_id, image_name, current_datetime, question, str(answers)])
+                    
         body = {'values': values}
         
         result = sheets_service.spreadsheets().values().append(
@@ -286,8 +289,10 @@ def display_question(question, current_image_id):
                 if option == "Others" and question.get('other_field'):
                     selected = st.checkbox(option, key=f"{current_image_id}_{option}")
                     if selected:
+                        # other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+                        # selected_options.append(other_text)
                         other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
-                        selected_options.append(other_text)
+                        selected_options.append(f"{question['question']} - {option}: {other_text}")  # Format the "Others" response
                 else:
                     selected = st.checkbox(option, key=f"{current_image_id}_{option}")
                     if selected:
