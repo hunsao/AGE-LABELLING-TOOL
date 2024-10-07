@@ -295,15 +295,15 @@ def display_question(question, current_image_id, review_mode=False, previous_res
                     if selected:
                     responses[option] = True
             
-        if "Other" in question['options']:
-            other_key = f"{current_image_id}_other_characteristic" # Unique key based on image ID
-            other_characteristic = st.text_input("Other characteristic:", key=other_key)
-            responses["other_characteristic"] = other_characteristic
-
-            if other_characteristic:
-                explanation_key = f"{current_image_id}_other_explanation" # Unique key based on image ID
-                explanation = st.text_area("Why?", key=explanation_key)
-                responses["other_explanation"] = explanation
+            if "Other" in question['options']:
+                other_key = f"{current_image_id}_other_characteristic" # Unique key based on image ID
+                other_characteristic = st.text_input("Other characteristic:", key=other_key)
+                responses["other_characteristic"] = other_characteristic
+    
+                if other_characteristic:
+                    explanation_key = f"{current_image_id}_other_explanation" # Unique key based on image ID
+                    explanation = st.text_area("Why?", key=explanation_key)
+                    responses["other_explanation"] = explanation
                     
     else:  # Round 1 & 2 logic (simple options)
         if question.get('multiple', False):  # Multiple choice (checkboxes)
