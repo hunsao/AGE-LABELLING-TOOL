@@ -374,17 +374,23 @@ def main():
                 col1, col2, col3 = st.columns([1, 2, 1])
 
                 with col2:
-                    st.markdown("<h1 style='text-align: center;'>Welcome to the AGEAI project questionary</h1>", unsafe_allow_html=True)
+                    st.markdown("<h1 style='text-align: center;'>AGEAI Labelling</h1>", unsafe_allow_html=True) #Welcome to the 
                     st.markdown("<p style='text-align: center;'>This tool is designed to help us collect data about images created with AI.</p>", unsafe_allow_html=True)
                     st.markdown("<p style='text-align: center;'>You will be presented with a series of images and questions. Please answer them to the best of your ability.</p>", unsafe_allow_html=True)
                     st.markdown("<p style='text-align: center;'>Your responses are valuable and will contribute to the improving our findings.</p>", unsafe_allow_html=True)
                     
-                    st.session_state.user_id = st.text_input('Enter your user ID', value=st.session_state.user_id)
+                    st.session_state.user_id = st.text_input('Please, enter your user ID (your email)', value=st.session_state.user_id)
                     
+                    # if st.session_state.user_id:
+                    #     if st.button("Start Questionnaire"):
+                    #         st.session_state.page = 'questionnaire'
+                    #         st.rerun()
                     if st.session_state.user_id:
-                        if st.button("Start Questionnaire"):
-                            st.session_state.page = 'questionnaire'
-                            st.rerun()
+                        _, button_col, _ = st.columns([1, 1, 1])  # Create three columns for button placement
+                        with button_col:  # Place button in the center column
+                            if st.button("Start Questionnaire"):
+                                st.session_state.page = 'questionnaire'
+                                st.rerun()
                     else:
                         st.warning("Please enter an user ID and click to start the questionnaire.")
 
