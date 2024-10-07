@@ -218,15 +218,22 @@ def display_question(question, current_image_id):
             st.write(f"#### {category}")
             if options:
                 for option in options:
-                    col1, col2 = st.columns([1, 3])
-                    with col1:
-                        selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}")
-                    with col2:
-                        if selected and question.get('requires_explanation'):
-                            explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation")
-                            responses[f"{option}_explanation"] = explanation
+                    # col1, col2 = st.columns([1, 3])
+                    # with col1:
+                    #     selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}")
+                    # with col2:
+                    #     if selected and question.get('requires_explanation'):
+                    #         explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation")
+                    #         responses[f"{option}_explanation"] = explanation
+                    # if selected:
+                    #     responses[option] = True
+                    selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}")
                     if selected:
-                        responses[option] = True
+                        responses.append(option)
+            if category == "Other":
+                other = st.text_input("Other characteristic:", key=f"{current_image_id}_other")
+                if other:
+                    responses.append(other)
             
             if category == "Other":
                 other = st.text_input("Other characteristic:", key=f"{current_image_id}_other")
@@ -234,18 +241,36 @@ def display_question(question, current_image_id):
                     explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
                     responses["other"] = other
                     responses["other_explanation"] = explanation
+    # else:
+    #     # Handle simple options (Round 1 & 2)
+    #     for option in question['options']:
+    #         if option == "Others" and question.get('other_field'):
+    #             selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+    #             if selected:
+    #                 other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+    #                 responses[option] = other_text
+    #         else:
+    #             selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+    #             if selected:
+    #                 responses[option] = True
     else:
         # Handle simple options (Round 1 & 2)
-        for option in question['options']:
-            if option == "Others" and question.get('other_field'):
-                selected = st.checkbox(option, key=f"{current_image_id}_{option}")
-                if selected:
-                    other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
-                    responses[option] = other_text
-            else:
-                selected = st.checkbox(option, key=f"{current_image_id}_{option}")
-                if selected:
-                    responses[option] = True
+        if question.get('multiple', False):
+            # Allow multiple selections with checkboxes
+            for option in question['options']:
+                if option == "Others" and question.get('other_field'):
+                    selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+                    if selected:
+                        other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+                        responses.append(other_text)
+                else:
+                    selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+                    if selected:
+                        responses.append(option)
+        else:
+            # Single selection with radio button
+            answer = st.radio("Select an option:", question['options'], key=f"{current_image_id}_radio")
+            responses.append(answer)
     
     return responses
 
