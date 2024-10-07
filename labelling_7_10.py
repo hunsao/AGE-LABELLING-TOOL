@@ -287,29 +287,33 @@ def display_question(question, current_image_id):
             selected_options = []
             for option in question['options']:
                 if option == "Others" and question.get('other_field'):
-                    selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+
+                   # Get previous state for review mode
+                    prev_selected = option in previous_responses
+                    selected = st.checkbox(option, key=f"{current_image_id}_{option}", value=prev_selected if review_mode else False)
+                    
+                    #selected = st.checkbox(option, key=f"{current_image_id}_{option}")
                     if selected:
-                        # other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
-                        # selected_options.append(other_text)
-                        other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
-                        selected_options.append(f"{option}: {other_text}")  # Format the "Others" response
-                        #selected_options.append(f"{question['question']} - {option}: {other_text}")  # Format the "Others" response
+                        ## other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+                        ## selected_options.append(other_text)
+                        #other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+                        #selected_options.append(f"{option}: {other_text}")  # Format the "Others" response
+                        ##selected_options.append(f"{question['question']} - {option}: {other_text}")  # Format the "Others" response
+
+                        prev_other_text = previous_responses.get(option, "")  # Get previous "Others" text
+                        other_text = st.text_input("Please specify:", value=prev_other_text if review_mode else "", key=f"{current_image_id}_other_text")
+                        selected_options.append(f"{option}: {other_text}")
+                
                 else:
-                    selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+                    prev_selected = option in previous_responses
+                    selected = st.checkbox(option, key=f"{current_image_id}_{option}", value=prev_selected if review_mode else False)
                     if selected:
                         selected_options.append(option)
             responses = selected_options
-        else:  # Single choice (buttons)
-            selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio")
-            responses = selected_option  # Store the selected option directly
-            # cols = st.columns(len(question['options']))
-            # for i, option in enumerate(question['options']):
-            #     with cols[i]:
-            #         if st.button(option, key=f"{current_image_id}_{option}"):
-            #             responses = option
-            #             # Store the response immediately in session state before rerun
-            #             st.session_state.temp_response = responses  # Use a temporary variable
-            #             st.rerun()
+        else:  # Single choice (radio)
+            prev_selected = previous_responses if review_mode else None
+            selected_option = st.radio("Select one:", question['options'], key=f"{current_image_id}_radio", index=question['options'].index(prev_selected) if prev_selected in question['options'] else 0)
+            responses = selected_option
 
     return responses
     
@@ -393,7 +397,9 @@ def main():
                     current_question = questionnaire[current_round][current_question_index]
 
                     st.markdown(f"## {current_round}")
-                    responses = display_question(current_question, current_image['id'])
+                    previous_resps = st.session_state.image_responses.get(current_image['id'], {}).get(current_question['question'], {}) if st.session_state.review_mode else {}
+                    responses = display_question(current_question, current_image['id'], review_mode=st.session_state.review_mode, previous_responses=previous_resps)  # Pass 
+                    #responses = display_question(current_question, current_image['id'])
                     
                     # Store responses
                     # if responses:
