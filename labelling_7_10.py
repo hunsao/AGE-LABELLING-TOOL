@@ -131,21 +131,51 @@ def download_and_cache_csv(_service, file_id):
     else:
         return None
 
+# def save_labels_to_google_sheets(sheets_service, spreadsheet_id, user_id, image_responses):
+#     try:
+#         current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+#         # Crear una lista de valores para cada respuesta, incluyendo la pregunta
+#         values = []
+#         for image_id, response_dict in image_responses.items():
+#             # Obtener el nombre de la imagen usando su ID
+#             image_name = next((img['name'] for img in st.session_state.all_images if img['id'] == image_id), "Unknown Image")
+#             for question, answer in response_dict.items():
+#                 values.append([user_id, image_name, current_datetime, question, answer])
+        
+#         body = {
+#             'values': values
+#         }
+        
+#         result = sheets_service.spreadsheets().values().append(
+#             spreadsheetId=spreadsheet_id,
+#             range='Sheet1',
+#             valueInputOption='USER_ENTERED',
+#             body=body
+#         ).execute()
+
+#         st.sidebar.success(f'Respuestas guardadas para las imágenes en Google Sheets')
+#     except Exception as e:
+#         st.error(f"Error al guardar las etiquetas en Google Sheets: {str(e)}")
+
 def save_labels_to_google_sheets(sheets_service, spreadsheet_id, user_id, image_responses):
     try:
         current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Crear una lista de valores para cada respuesta, incluyendo la pregunta
         values = []
-        for image_id, response_dict in image_responses.items():
-            # Obtener el nombre de la imagen usando su ID
-            image_name = next((img['name'] for img in st.session_state.all_images if img['id'] == image_id), "Unknown Image")
-            for question, answer in response_dict.items():
-                values.append([user_id, image_name, current_datetime, question, answer])
         
-        body = {
-            'values': values
-        }
+        for image_id, response_dict in image_responses.items():
+            image_name = next((img['name'] for img in st.session_state.all_images if img['id'] == image_id), "Unknown Image")
+            for question, answers in response_dict.items():
+                if isinstance(answers, dict):
+                    for option, value in answers.items():
+                        if isinstance(value, bool) and value:
+                            values.append([user_id, image_name, current_datetime, question, option])
+                        elif isinstance(value, str) and option.endswith('_explanation'):
+                            values.append([user_id, image_name, current_datetime, f"{question} - Explanation", f"{option[:-12]}: {value}"])
+                else:
+                    values.append([user_id, image_name, current_datetime, question, str(answers)])
+        
+        body = {'values': values}
         
         result = sheets_service.spreadsheets().values().append(
             spreadsheetId=spreadsheet_id,
@@ -154,9 +184,9 @@ def save_labels_to_google_sheets(sheets_service, spreadsheet_id, user_id, image_
             body=body
         ).execute()
 
-        st.sidebar.success(f'Respuestas guardadas para las imágenes en Google Sheets')
+        st.sidebar.success('Responses saved successfully to Google Sheets')
     except Exception as e:
-        st.error(f"Error al guardar las etiquetas en Google Sheets: {str(e)}")
+        st.error(f"Error saving labels to Google Sheets: {str(e)}")
 
 # Define the questionnaire structure
 questionnaire = {
@@ -203,34 +233,92 @@ def main():
 
     parent_folder_id = extract_folder_id(drive_url)
 
-    if 'page' not in st.session_state:
-        st.session_state.page = 'start'
+    # if 'page' not in st.session_state:
+    #     st.session_state.page = 'start'
 
+    # if 'current_question' not in st.session_state:
+    #     st.session_state.current_question = 0
+
+    # if 'responses' not in st.session_state:
+    #     st.session_state.responses = {}
+
+    # if 'user_id' not in st.session_state:
+    #     st.session_state.user_id = ''
+
+    # if 'review_mode' not in st.session_state:
+    #     st.session_state.review_mode = False    
+
+    # if 'current_image_index' not in st.session_state:
+    #     st.session_state.current_image_index = 0
+
+    # if 'random_images' not in st.session_state:
+    #     st.session_state.random_images = []
+
+    # if 'image_responses' not in st.session_state:
+    #     st.session_state.image_responses = {}
+
+    # if 'all_images' not in st.session_state:
+    #     st.session_state.all_images = []
+
+    # # Sidebar
+    # if parent_folder_id:
+    #     images_folder_id, csv_file_id = find_images_folder_and_csv_id(drive_service, parent_folder_name)
+    #     if images_folder_id and csv_file_id:
+    #         image_list = list_images_in_folder(drive_service, images_folder_id)
+
+    #         if not st.session_state.random_images:
+    #             st.session_state.random_images = random.sample(image_list, N_IMAGES_PER_QUESTION)
+    #             st.session_state.all_images.extend(st.session_state.random_images)  # Guardar todas las imágenes utilizadas
+
+    #         if st.session_state.page == 'start':
+    #             col1, col2, col3 = st.columns([1, 2, 1])
+
+    #             with col2:
+    #                 st.markdown("<h1 style='text-align: center;'>Welcome to the AGEAI project questionary</h1>", unsafe_allow_html=True)
+    #                 st.markdown("<p style='text-align: center;'>This tool is designed to help us collect data about images created with AI.</p>", unsafe_allow_html=True)
+    #                 st.markdown("<p style='text-align: center;'>You will be presented with a series of images and questions. Please answer them to the best of your ability.</p>", unsafe_allow_html=True)
+    #                 st.markdown("<p style='text-align: center;'>Your responses are valuable and will contribute to the improving our findings.</p>", unsafe_allow_html=True)
+                    
+    #                 st.session_state.user_id = st.text_input('Enter your user ID', value=st.session_state.user_id)
+                    
+    #                 if st.session_state.user_id:
+    #                     if st.button("Start Questionnaire"):
+    #                         st.session_state.page = 'questionnaire'
+    #                         st.rerun()
+    #                 else:
+    #                     st.warning("Please enter an user ID and click to start the questionnaire.")
+
+    #         elif st.session_state.page == 'questionnaire':
+    #             # Mostrar progreso en la barra lateral
+    #             for round_name, questions in questionnaire.items():
+    #                 st.sidebar.subheader(round_name)
+    #                 for i, q in enumerate(questions):
+    #                     question_number = i + 1 if round_name == "ROUND 1" else len(questionnaire["ROUND 1"]) + i + 1
+    #                     if st.session_state.review_mode or question_number <= st.session_state.current_question:
+    #                         if st.sidebar.button(f"✅ {q['question'][:100]}...", key=f"nav_{round_name}_{i}"):
+    #                             st.session_state.current_question = question_number - 1
+    #                             st.rerun()
+    #                     else:
+    #                         st.sidebar.button(f"⬜ {q['question'][:100]}...", key=f"nav_{round_name}_{i}", disabled=True)
+
+
+    if 'page' not in st.session_state:
+    st.session_state.page = 'start'
     if 'current_question' not in st.session_state:
         st.session_state.current_question = 0
-
-    if 'responses' not in st.session_state:
-        st.session_state.responses = {}
-
     if 'user_id' not in st.session_state:
         st.session_state.user_id = ''
-
     if 'review_mode' not in st.session_state:
         st.session_state.review_mode = False    
-
     if 'current_image_index' not in st.session_state:
         st.session_state.current_image_index = 0
-
     if 'random_images' not in st.session_state:
         st.session_state.random_images = []
-
     if 'image_responses' not in st.session_state:
         st.session_state.image_responses = {}
-
     if 'all_images' not in st.session_state:
         st.session_state.all_images = []
 
-    # Sidebar
     if parent_folder_id:
         images_folder_id, csv_file_id = find_images_folder_and_csv_id(drive_service, parent_folder_name)
         if images_folder_id and csv_file_id:
@@ -238,39 +326,69 @@ def main():
 
             if not st.session_state.random_images:
                 st.session_state.random_images = random.sample(image_list, N_IMAGES_PER_QUESTION)
-                st.session_state.all_images.extend(st.session_state.random_images)  # Guardar todas las imágenes utilizadas
+                st.session_state.all_images.extend(st.session_state.random_images)
 
-            if st.session_state.page == 'start':
-                col1, col2, col3 = st.columns([1, 2, 1])
+            if st.session_state.page == 'questionnaire':
+                col1, col2 = st.columns([2, 3])
 
+                # Display current image
                 with col2:
-                    st.markdown("<h1 style='text-align: center;'>Welcome to the AGEAI project questionary</h1>", unsafe_allow_html=True)
-                    st.markdown("<p style='text-align: center;'>This tool is designed to help us collect data about images created with AI.</p>", unsafe_allow_html=True)
-                    st.markdown("<p style='text-align: center;'>You will be presented with a series of images and questions. Please answer them to the best of your ability.</p>", unsafe_allow_html=True)
-                    st.markdown("<p style='text-align: center;'>Your responses are valuable and will contribute to the improving our findings.</p>", unsafe_allow_html=True)
-                    
-                    st.session_state.user_id = st.text_input('Enter your user ID', value=st.session_state.user_id)
-                    
-                    if st.session_state.user_id:
-                        if st.button("Start Questionnaire"):
-                            st.session_state.page = 'questionnaire'
-                            st.rerun()
-                    else:
-                        st.warning("Please enter an user ID and click to start the questionnaire.")
+                    current_image = st.session_state.random_images[st.session_state.current_image_index]
+                    image_bytes = download_file_from_google_drive(drive_service, current_image['id'])
+                    st.image(image_bytes, use_column_width=True)
 
-            elif st.session_state.page == 'questionnaire':
-                # Mostrar progreso en la barra lateral
+                # Main questionnaire section
+                with col1:
+                    current_round = list(questionnaire.keys())[st.session_state.current_question // len(questionnaire[list(questionnaire.keys())[0]])]
+                    current_question_index = st.session_state.current_question % len(questionnaire[current_round])
+                    current_question = questionnaire[current_round][current_question_index]
+
+                    st.markdown(f"## {current_round}")
+                    responses = display_question(current_question, current_image['id'])
+                    
+                    # Store responses
+                    if responses:
+                        if current_image['id'] not in st.session_state.image_responses:
+                            st.session_state.image_responses[current_image['id']] = {}
+                        st.session_state.image_responses[current_image['id']][current_question['question']] = responses
+
+                # Navigation buttons
+                with col2:
+                    st.write(f"<div style='text-align: center;'>Image {st.session_state.current_image_index + 1} of {N_IMAGES_PER_QUESTION}</div>", unsafe_allow_html=True)
+                    
+                    if st.button("Next Question", key="next_button"):
+                        responses = st.session_state.image_responses.get(current_image['id'], {}).get(current_question['question'])
+                        if responses:
+                            st.session_state.current_question += 1
+                            total_questions = sum(len(questions) for questions in questionnaire.values())
+                            
+                            if st.session_state.current_question >= total_questions:
+                                st.session_state.page = 'review'
+                                st.session_state.review_mode = True
+                            else:
+                                # Select new images for the next question
+                                st.session_state.random_images = random.sample(image_list, N_IMAGES_PER_QUESTION)
+                                st.session_state.all_images.extend(st.session_state.random_images)
+                                st.session_state.current_image_index = 0
+                            st.rerun()
+                        else:
+                            st.warning("Please answer the question before proceeding.")
+
+                # Sidebar navigation
                 for round_name, questions in questionnaire.items():
                     st.sidebar.subheader(round_name)
                     for i, q in enumerate(questions):
-                        question_number = i + 1 if round_name == "ROUND 1" else len(questionnaire["ROUND 1"]) + i + 1
+                        total_previous_questions = sum(len(qs) for rn, qs in questionnaire.items() if rn < round_name)
+                        question_number = total_previous_questions + i + 1
+                        
                         if st.session_state.review_mode or question_number <= st.session_state.current_question:
-                            if st.sidebar.button(f"✅ {q['question'][:100]}...", key=f"nav_{round_name}_{i}"):
+                            if st.sidebar.button(f"✅ {q['question'][:50]}...", key=f"nav_{round_name}_{i}"):
                                 st.session_state.current_question = question_number - 1
                                 st.rerun()
                         else:
-                            st.sidebar.button(f"⬜ {q['question'][:100]}...", key=f"nav_{round_name}_{i}", disabled=True)
+                            st.sidebar.button(f"⬜ {q['question'][:50]}...", key=f"nav_{round_name}_{i}", disabled=True)
 
+    
                 # Contenido principal
                 col1, col2 = st.columns([2, 3])
 
