@@ -8,7 +8,6 @@ import re
 import random
 import json
 import base64
-#import ssl
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -19,12 +18,7 @@ st.set_page_config(
     page_title="AGEAI Questionnaire",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="collapsed"#,expanded
-    #menu_items={
-    #    'Get Help': 'https://www.extremelycoolapp.com/help',
-    #    'Report a bug': "https://www.extremelycoolapp.com/bug",
-    #    'About': "# This is a header. This is an *extremely* cool app!"
-    #}
+    initial_sidebar_state="collapsed"
 )
 
 #@st.cache_resource
@@ -159,34 +153,103 @@ def save_labels_to_google_sheets(sheets_service, spreadsheet_id, user_id, image_
         st.error(f"Error al guardar las etiquetas en Google Sheets: {str(e)}")
 
 # Define the questionnaire structure
+# Updated questionnaire structure
 questionnaire = {
     "ROUND 1": [
         {
-            "question": "P1. Indicate the number of people you see in the image",
-            "options": ["0", "1", "2", "3", "+3", "Don't know"],
-            "definition": "People is some person than can clearly be identified as a real human. Do not count as a person completely blurry images in the background, or hallucinations (that frequently exist in AI generated images, as a person with 3 hands), or depicted images in a non photorealistic style (ex: cartoon)."
-        },
-        {
-            "question": "P2. Indicate if you are observing people from behind",
+            "question": "Q1. Indicate if the activity you see in the image correlates with the activity formulated in the prompt",
             "options": ["Yes", "No", "Don't know"],
-            "definition": "From behind means that image shows people from the rear or the back side, rather than from the front or a more visible angle.\n- **Yes:** One person is showed from behind.\n- **No:** No person is showed from behind."
-        },
-        {
-            "question": "P3. Indicate the gender of the person you see in the image",
-            "options": ["Female", "Male", "Don't know"],
-            "definition": "Despite gender is social construct that 'varies from society to society and can change over time', we use here a simplification of the classification of gender due to the limitations of Computer Vision variables developed."
+            "definition": """The activity you see in the image is the main action people you observe is doing. For example: eating, walking, speaking...
+
+Options:
+Yes = the image is not in contradiction to the activity formulated in the prompt.
+No = the image is clearly not the activity formulated in the prompt. 
+Don't know = you can't decide if the activity is the same in both cases (prompt and image).""",
+            "multiple": False
         }
     ],
     "ROUND 2": [
         {
-            "question": "P4. Are there assistive products?",
-            "options": ["Yes", "No", "Don't know"],
-            "definition": "Assistive products can range from physical products such as wheelchairs, glasses, prosthetic limbs, white canes, and hearing aids to digital solutions such as speech recognition or time management software and captioning"
+            "question": "Q5. Indicate what assistive object you appreciate in the image (choose one or more)",
+            "options": ["Wheelchairs", "Glasses (but not sun glasses)", "Prosthetic limbs", "White canes", "Others", "None"],
+            "definition": "Assistive products can range from physical products such as wheelchairs, glasses, prosthetic limbs, white canes, and hearing aids to digital solutions such as speech recognition or time management software and captioning",
+            "multiple": True,
+            "other_field": True
+        }
+    ],
+    "ROUND 3": [
+        {
+            "question": "Q8. Select the characteristics that best describe this images",
+            "options": {
+                "Attitude": ["Positive attitude", "Negative attitude"],
+                "Role": ["Active role", "Passive role"],
+                "Physics": ["Physically active", "Physical limitations"],
+                "Style": ["Modern style", "Old style"],
+                "Other": []
+            },
+            "definition": "Characteristics refers to the person you see in the image (attitude, role, physics) and to the person/background surrounding them (For example: clothes, walls with memories, etc).",
+            "explanation": {
+                "Positive attitude": "The person is depicted relaxed, happy, or carefree",
+                "Negative attitude": "The person is depicted worried, sad or concerned",
+                "Active role": "The person has actively performing the activity of the prompt",
+                "Passive role": "The person is passively disengaged from the activity of the prompt",
+                "Physically active": "The person exhibits no physical limitations in doing certain activities",
+                "Physical limitations": "The person shows physical limitations in doing certain activities",
+                "Modern style": "The person is depicted in a stereotypical young style",
+                "Old style": "The person is depicted in a stereotypical old style"
+            },
+            "multiple": True,
+            "requires_explanation": True
         }
     ]
 }
 
-N_IMAGES_PER_QUESTION = 2  # Número de imágenes a mostrar por cada pregunta
+def display_question(question, current_image_id):
+    st.write("### **Question:**")
+    st.write(question['question'])
+    st.write("### **Definition:**")
+    st.write(question['definition'])
+    
+    responses = {}
+    
+    if isinstance(question['options'], dict):
+        # Handle nested options (Round 3)
+        for category, options in question['options'].items():
+            st.write(f"#### {category}")
+            if options:
+                for option in options:
+                    col1, col2 = st.columns([1, 3])
+                    with col1:
+                        selected = st.checkbox(option, key=f"{current_image_id}_{category}_{option}")
+                    with col2:
+                        if selected and question.get('requires_explanation'):
+                            explanation = st.text_area(f"Why {option}?", key=f"{current_image_id}_{option}_explanation")
+                            responses[f"{option}_explanation"] = explanation
+                    if selected:
+                        responses[option] = True
+            
+            if category == "Other":
+                other = st.text_input("Other characteristic:", key=f"{current_image_id}_other")
+                if other:
+                    explanation = st.text_area("Why?", key=f"{current_image_id}_other_explanation")
+                    responses["other"] = other
+                    responses["other_explanation"] = explanation
+    else:
+        # Handle simple options (Round 1 & 2)
+        for option in question['options']:
+            if option == "Others" and question.get('other_field'):
+                selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+                if selected:
+                    other_text = st.text_input("Please specify:", key=f"{current_image_id}_other_text")
+                    responses[option] = other_text
+            else:
+                selected = st.checkbox(option, key=f"{current_image_id}_{option}")
+                if selected:
+                    responses[option] = True
+    
+    return responses
+
+N_IMAGES_PER_QUESTION = 3  # Número de imágenes a mostrar por cada pregunta
 
 def main():
     #st.set_page_config(layout="wide")
@@ -259,6 +322,10 @@ def main():
                         st.warning("Please enter an user ID and click to start the questionnaire.")
 
             elif st.session_state.page == 'questionnaire':
+                # Update the sidebar progress display
+                total_questions = sum(len(questions) for questions in questionnaire.values())
+                current_round = list(questionnaire.keys())[st.session_state.current_question // len(questionnaire)]
+                
                 # Mostrar progreso en la barra lateral
                 for round_name, questions in questionnaire.items():
                     st.sidebar.subheader(round_name)
